@@ -2,15 +2,16 @@
 // Created by Pawel Polerowicz
 //
 
+#include <iostream>
 #include "../../include/graph/Graph.h"
 
 Graph::Graph(bool directed, int n)
-    : _isDirected(directed) {
+    : _isDirected(directed), _n(n) {
     _adjacencyList.resize(n);
 }
 
 Graph::Graph(bool directed, int n, int m)
-    : _isDirected(directed) {
+    : _isDirected(directed), _n(n) {
     _adjacencyList.resize(n);
 }
 
@@ -26,7 +27,14 @@ void Graph::addEdge(int u, int v, int w) {
 }
 
 void Graph::print() const {
-
+    int i = 0;
+    for (auto& v : _adjacencyList) {
+        std::cout << i++ << ' ';
+        for (auto n : v) {
+            std::cout << n << ' ';
+        }
+        std::cout << '\n';
+    }
 }
 
 std::vector<std::vector<int>> Graph::getAdjacencyList() const {
@@ -44,4 +52,12 @@ bool Graph::edgeExist(int u, int v) const {
         }
     }
     return false;
+}
+
+int Graph::getNumberOfVertices() const {
+    return _n;
+}
+
+bool Graph::isDirected() const {
+    return _isDirected;
 }

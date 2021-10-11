@@ -4,4 +4,4 @@ project(AOD)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "--pedantic -Wall -Wextra")
 
-add_executable(L1 main.cpp src/graph/Graph.cpp include/graph/Graph.h)
+add_executable(L1 main.cpp src/graph/Graph.cpp include/graph/Graph.h include/graph/Result.h include/utils/Timer.h src/graph/GraphAlgorithms.cpp include/graph/GraphAlgorithms.h)

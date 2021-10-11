@@ -24,8 +24,11 @@ public:
     [[nodiscard]] std::vector<std::vector<int>> getAdjacencyList() const;
     [[nodiscard]] std::vector<int> getNeighbours(int n) const;
     [[nodiscard]] bool edgeExist(int u, int v) const;
+    int getNumberOfVertices() const;
+    bool isDirected() const;
 private:
     bool _isDirected;
+    int _n;
     //std::vector<Edge> edges
     std::vector<std::vector<int>> _adjacencyList;
 };
