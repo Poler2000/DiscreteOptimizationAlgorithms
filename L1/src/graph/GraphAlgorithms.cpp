@@ -26,7 +26,7 @@ Result<Graph*> GraphAlgorithms::BFS(const Graph &graph, int s) {
 
     while(!queue.empty()) {
         s = queue.front();
-        std::cout << s << " ";
+        //std::cout << s << " ";
         queue.pop();
 
         auto neighbours = graph.getNeighbours(s);
@@ -53,7 +53,7 @@ Result<Graph*> GraphAlgorithms::DFS(const Graph &graph, int s) {
 
     for (int i = 0; i < graph.getNumberOfVertices(); i++) {
         if (!visited[i]) {
-            DFSHelper(graph, tree, s, visited);
+            DFSHelper(graph, tree, i, visited);
         }
     }
     Result<Graph*> r = {tree, t.getTimeInMicroseconds(), 0};
@@ -62,7 +62,7 @@ Result<Graph*> GraphAlgorithms::DFS(const Graph &graph, int s) {
 
 void GraphAlgorithms::DFSHelper(const Graph &graph, Graph* tree, int s, std::vector<bool>& visited) {
     visited[s] = true;
-    std::cout << s << " ";
+    //std::cout << s << " ";
 
     auto neighbours = graph.getNeighbours(s);
     for (auto n : neighbours) {
@@ -85,7 +85,6 @@ Result<std::vector<int>> GraphAlgorithms::topologicalSort(const Graph &graph) {
 
 void GraphAlgorithms::topologicalDFS(const Graph &graph, std::vector<int> &visitedList) {
     std::vector<bool> visited(graph.getNumberOfVertices());
-    Timer t;
 
     for (int i = 0; i < graph.getNumberOfVertices(); i++) {
         visited[i] = false;
@@ -93,7 +92,7 @@ void GraphAlgorithms::topologicalDFS(const Graph &graph, std::vector<int> &visit
 
     for (int i = 0; i < graph.getNumberOfVertices(); i++) {
         if (!visited[i]) {
-            topologicalDFSHelper(graph, visitedList, visited, 0);
+            topologicalDFSHelper(graph, visitedList, visited, i);
         }
     }
 }
@@ -115,6 +114,8 @@ Result<std::vector<std::vector<int>>> GraphAlgorithms::stronglyConnectedComponen
     Timer t;
     std::vector<int> visitedList;
     Graph g(graph.isDirected(), graph.getNumberOfVertices());
+    std::vector<std::vector<int>> sccs;
+    int sccIndex = 0;
 
     topologicalDFS(graph, visitedList);
     for (int i = 0; i < graph.getNumberOfVertices(); i++) {
@@ -133,19 +134,23 @@ Result<std::vector<std::vector<int>>> GraphAlgorithms::stronglyConnectedComponen
 
     for (auto& n: visitedList) {
         if (!visited[n]) {
-            sccDFSHelper(g, visited, n);
-            std::cout << '\n';
+            sccs.emplace_back(std::vector<int>());
+            sccDFSHelper(g, visited, sccs[sccIndex++], n);
+            //std::cout << '\n';
         }
     }
+
+    return Result<std::vector<std::vector<int>>>{sccs, t.getTimeInMicroseconds(), 0};
 }
 
-void GraphAlgorithms::sccDFSHelper(const Graph &graph, std::vector<bool> &visited, int s) {
+void GraphAlgorithms::sccDFSHelper(const Graph &graph, std::vector<bool> &visited, std::vector<int> &scc, int s) {
     visited[s] = true;
-    std::cout << s << " ";
+    scc.emplace_back(s);
+    //std::cout << s << " ";
     auto neighbours = graph.getNeighbours(s);
     for (auto n : neighbours) {
         if (!visited[n]) {
-            sccDFSHelper(graph, visited, n);
+            sccDFSHelper(graph, visited, scc, n);
         }
     }
 }

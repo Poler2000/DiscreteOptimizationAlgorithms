@@ -28,7 +28,7 @@ private:
     static void DFSHelper(const Graph& graph, Graph* tree, int s, std::vector<bool>& visited);
     static void topologicalDFS(const Graph& graph, std::vector<int>& visitedList);
     static void topologicalDFSHelper(const Graph& graph, std::vector<int>& visitedList, std::vector<bool>& visited, int s);
-    static void sccDFSHelper(const Graph& graph, std::vector<bool>& visited, int s);
+    static void sccDFSHelper(const Graph& graph, std::vector<bool>& visited, std::vector<int> &scc, int s);
 
     static void
     checkBigraphDFSHelper(const Graph &graph, std::set<int>& green, std::set<int>& white, std::vector<bool>& visited,
