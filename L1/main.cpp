@@ -61,10 +61,8 @@ void generateGraph(bool directed, int n, int m, const std::string& outputFile) {
 }
 
 int main(int argc, char* argv[]) {
-    generateGraph(true, 1000, 100000, "D_1000.txt");
     std::string inputFile(argv[1]);
     Graph* g = loadGraph(inputFile);
-
 
     std::cout << "graph:\n";
     g->print();
@@ -72,20 +70,20 @@ int main(int argc, char* argv[]) {
     std::cout<< "BFS:\n";
     auto result2 = GraphAlgorithms::BFS(*g);
     std::cout << "\nBFS tree:\n";
-    //result2.value->print();
+    result2.value->print();
     std::cout << "operation took: " << result2.time << "us\n";
 
     std::cout << "DFS:\n";
     auto result1 = GraphAlgorithms::DFS(*g);
     std::cout << "\nDFS tree:\n";
-    //result1.value->print();
+    result1.value->print();
     std::cout << "operation took: " << result1.time << "us\n";
 
     auto result3 = GraphAlgorithms::topologicalSort(*g);
     std::cout << "\nTopological tree:\n";
-    /*for (auto& n : result3.value) {
+    for (auto& n : result3.value) {
         std::cout << n << " ";
-    }*/
+    }
     std::cout << "operation took: " << result3.time << "us\n";
 
     std::cout << "\nSCC:\n";
