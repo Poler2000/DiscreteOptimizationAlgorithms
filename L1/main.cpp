@@ -8,7 +8,9 @@
 Graph* loadGraph(const std::string& inputFile) {
     int n, m, u, v;
     char directed;
-
+    struct {
+        int lobby_id = -1;
+    }msgContent{};
     std::fstream f(inputFile, std::ios::in);
     if (f.bad()) {
         std::cout << "incorrect file\n";
