@@ -2,17 +2,18 @@
 // Created by pawel on 09.12.2021.
 //
 
-#include "GraphAlgorithms.h"
-#include "PriorityQueue.h"
-#include "Timer.h"
-#include "Bucket.h"
+#include "../include/GraphAlgorithms.h"
+#include "../include/PriorityQueue.h"
+#include "../include/Timer.h"
+#include "../include/Bucket.h"
 
 #include <list>
 
 std::vector<long> GraphAlgorithms::dijkstra(Graph* g, int s) {
-    Timer t;
     size_t n = g->getNumberOfVertices();
+    // distance labels
     std::vector<long> d(n + 1);
+    // predecessors
     std::vector<int> pred(n + 1);
     PriorityQueue q;
 
@@ -36,16 +37,213 @@ std::vector<long> GraphAlgorithms::dijkstra(Graph* g, int s) {
             }
         }
     }
-    std::cout << "t0: " << t.getTimeInMicroseconds().count() << '\n';
     return d;
 }
 
 std::vector<long> GraphAlgorithms::dial(Graph *g, int s, int C) {
-    Timer t1;
     size_t n = g->getNumberOfVertices();
     size_t nC = C + 1;
     int visited = 0;
-    //std::vector<int> d(n + 1);
+    // distance labels
+    std::vector<std::pair<long, std::list<int>::iterator> > d(n + 1);
+    // predecessors
+    std::vector<int> pred(n + 1);
+    // cups
+    std::vector<std::list<int>> content(nC);
+    for (size_t i = 1; i < n + 1; i++) {
+        d[i].first = INF;
+    }
+    d[s].first = 0;
+    pred[s] = s;
+    content[0].push_back(s);
+    long i = 0;
+    while(visited < n) {
+        while (content[i % nC].empty() && i < nC * n) {
+            i++;
+        }
+        if (i >= nC * n) {
+            break;
+        }
+
+        do {
+            int u = content[i % nC].front();
+            visited++;
+            content[i % nC].pop_front();
+
+            auto edges = g->getEdges(u);
+
+            for (auto& e : edges) {
+                if (d[e.dest].first > d[u].first + e.w) {
+                    if (d[e.dest].first != INF) {
+                        content[d[e.dest].first % nC].erase(d[e.dest].second);
+                    }
+
+                    d[e.dest].first = d[u].first + e.w;
+                    pred[e.dest] = u;
+
+                    content[d[e.dest].first % nC].push_front(e.dest);
+                    d[e.dest].second = content[d[e.dest].first % nC].begin();
+                }
+            }
+        } while (!content[i % nC].empty());
+
+    }
+    std::vector<long> distance(n);
+    for (size_t i = 1; i < n + 1; i++) {
+        distance[i - 1] = d[i].first;
+    }
+
+    return distance;
+}
+
+std::vector<long> GraphAlgorithms::radix(Graph *g, int s, int C) {
+    size_t n = g->getNumberOfVertices();
+    int visited = 0;
+    std::vector<std::pair<long, std::list<int>::iterator>> d(n + 1);
+    std::vector<int> pred(n + 1);
+    size_t nofBuckets = (size_t)std::log2(C) + 2;
+    std::vector<Bucket2> content(nofBuckets);
+
+    content[0].minLabel = 0;
+    content[0].maxLabel = 0;
+
+    for (size_t i = 0; i < nofBuckets - 1; i++) {
+        content[i + 1].minLabel = pow(2, i);
+        content[i + 1].maxLabel = pow(2, i + 1) - 1;
+        content[i + 1].content = std::list<int>();
+    }
+    for (size_t i = 1; i < n + 1; i++) {
+        d[i].first = INF;
+    }
+
+    d[s].first = 0;
+    pred[s] = s;
+    content[0].content = std::list<int>();
+    content[0].content.push_front(s);
+    d[s].second = content[0].content.begin();
+    content[0].elements = 1;
+
+    // main loop
+    while(visited < n) {
+        long i = 0;
+        while (content[i].elements < 1 && i < nofBuckets) {
+            i++;
+        }
+        if (i >= nofBuckets) {
+            break;
+        }
+        long minLabel = INF;
+        long u;
+        // find u with min label
+        for (auto& c: content[i].content) {
+            if (d[c].first < minLabel) {
+                minLabel = d[c].first;
+                u = c;
+            }
+        }
+        content[i].content.remove(u);
+        content[i].elements--;
+        visited++;
+        minLabel = d[u].first - content[0].minLabel;
+
+        // update labels
+        for (auto& b: content) {
+            b.minLabel += minLabel;
+            b.maxLabel += minLabel;
+        }
+
+        // move nodes to correct cup
+        for (int j = 1; j < nofBuckets; j++) {
+            if (content[j].elements > 0) {
+                int e = content[j].elements;
+                for (int k = 0; k < e; k++) {
+                    int node = content[j].content.front();
+                    content[j].content.pop_front();
+                    content[j].elements--;
+                    int l = j;
+                    while (content[l].minLabel > d[node].first) {
+                        l--;
+                    }
+                    content[l].content.push_back(node);
+                    d[node].second = content[l].content.end();
+                    content[l].elements += 1;
+                }
+            }
+        }
+        auto edges = g->getEdges(u);
+
+        // we search edges from u
+        for (auto& e : edges) {
+            if (d[e.dest].first > d[u].first + e.w) {
+                // is node already in one of cups?
+                if (d[e.dest].first != INF) {
+                    int j = 0;
+                    while (content[j].maxLabel < d[e.dest].first) {
+                        j++;
+                    }
+                    content[j].content.remove(e.dest);
+                    content[j].elements--;
+                }
+
+                d[e.dest].first = d[u].first + e.w;
+                pred[e.dest] = u;
+                int j = 0;
+                while (content[j].maxLabel < d[e.dest].first) {
+                    j++;
+                }
+                content[j].content.push_front(e.dest);
+                content[j].elements++;
+
+                d[e.dest].second = content[j].content.begin();
+            }
+        }
+    }
+
+    // postprocessing
+    std::vector<long> distance(n);
+    for (size_t i = 1; i < n + 1; i++) {
+        distance[i - 1] = d[i].first;
+    }
+
+    return distance;
+}
+
+long GraphAlgorithms::dijkstra(Graph *g, int s, int goal) {
+    size_t n = g->getNumberOfVertices();
+    std::vector<long> d(n + 1);
+    std::vector<int> pred(n + 1);
+    PriorityQueue q;
+
+    for (size_t i = 1; i < n + 1; i++) {
+        d[i] = INF;
+    }
+    d[s] = 0;
+    pred[s] = s;
+    for (size_t i = 1; i < n + 1; i++) {
+        q.insert(i, d[i]);
+    }
+
+    while(!q.empty()) {
+        int u = q.pop();
+        if (u == goal) {
+            break;
+        }
+        auto edges = g->getEdges(u);
+        for (auto& e : edges) {
+            if (d[e.dest] > d[u] + e.w) {
+                d[e.dest] = d[u] + e.w;
+                pred[e.dest] = u;
+                q.priority(e.dest, d[e.dest]);
+            }
+        }
+    }
+    return d[goal];
+}
+
+long GraphAlgorithms::dial(Graph *g, int s, int goal, int C) {
+    size_t n = g->getNumberOfVertices();
+    size_t nC = C + 1;
+    int visited = 0;
     std::vector<std::pair<long, std::list<int>::iterator> > d(n + 1);
     std::vector<int> pred(n + 1);
     std::vector<std::list<int>> content(nC);
@@ -56,81 +254,70 @@ std::vector<long> GraphAlgorithms::dial(Graph *g, int s, int C) {
     pred[s] = s;
     content[0].push_back(s);
     long i = 0;
-    //std::cout << "t1: " << t1.getTimeInMicroseconds().count() << '\n';
-    Timer t2;
     while(visited < n) {
-        Timer t3;
         while (content[i % nC].empty() && i < nC * n) {
             i++;
         }
-        //std::cout << "t3: " << t3.getTimeInMicroseconds().count() << '\n';
         if (i >= nC * n) {
             break;
         }
-        int u = content[i % nC].front();
-        visited++;
-        content[i % nC].pop_front();
 
-        auto edges = g->getEdges(u);
-
-        Timer t4;
-
-        for (auto& e : edges) {
-            if (d[e.dest].first > d[u].first + e.w) {
-                Timer t5;
-                if (d[e.dest].first != INF) {
-                    //content[d[e.dest].first % nC].remove(e.dest);
-                    content[d[e.dest].first % nC].erase(d[e.dest].second);
-                }
-                //std::cout << "t5: " << t5.getTimeInMicroseconds().count() << '\n';
-
-                Timer t6;
-                d[e.dest].first = d[u].first + e.w;
-                pred[e.dest] = u;
-
-                content[d[e.dest].first % nC].push_front(e.dest);
-                d[e.dest].second = content[d[e.dest].first % nC].begin();
-                //std::cout << "t6: " << t6.getTimeInMicroseconds().count() << '\n';
+        do {
+            int u = content[i % nC].front();
+            if (u == goal) {
+                d[goal].first;
             }
-        }
-        //std::cout << "t4: " << t4.getTimeInMicroseconds().count() << '\n';
+            visited++;
+            content[i % nC].pop_front();
+
+            auto edges = g->getEdges(u);
+
+            for (auto& e : edges) {
+                if (d[e.dest].first > d[u].first + e.w) {
+                    if (d[e.dest].first != INF) {
+                        content[d[e.dest].first % nC].erase(d[e.dest].second);
+                    }
+
+                    d[e.dest].first = d[u].first + e.w;
+                    pred[e.dest] = u;
+
+                    content[d[e.dest].first % nC].push_front(e.dest);
+                    d[e.dest].second = content[d[e.dest].first % nC].begin();
+                }
+            }
+        } while (!content[i % nC].empty());
 
     }
-    //std::cout << "t2: " << t2.getTimeInMicroseconds().count() << '\n';
 
-    std::vector<long> distance(n);
-    for (size_t i = 1; i < n + 1; i++) {
-        distance[i - 1] = d[i].first;
-    }
-    std::cout << "t2: " << t2.getTimeInMicroseconds().count() << '\n';
-
-    return distance;
+    return d[goal].first;
 }
 
-std::vector<long> GraphAlgorithms::radix(Graph *g, int s, int C) {
+long GraphAlgorithms::radix(Graph *g, int s, int goal, int C) {
     size_t n = g->getNumberOfVertices();
-    size_t nC = C + 1;
     int visited = 0;
-    std::vector<std::pair<long, std::list<int>::iterator>> d(nC);
+    std::vector<std::pair<long, std::list<int>::iterator>> d(n + 1);
     std::vector<int> pred(n + 1);
-    size_t nofBuckets = (size_t)std::log2(n) + 1;
-    std::vector<Bucket> content(nofBuckets);
+    size_t nofBuckets = (size_t)std::log2(C) + 2;
+    std::vector<Bucket2> content(nofBuckets);
     content[0].minLabel = 0;
     content[0].maxLabel = 0;
     for (size_t i = 0; i < nofBuckets - 1; i++) {
         content[i + 1].minLabel = pow(2, i);
         content[i + 1].maxLabel = pow(2, i + 1) - 1;
+        content[i + 1].content = std::list<int>();
     }
     for (size_t i = 1; i < n + 1; i++) {
         d[i].first = INF;
     }
     d[s].first = 0;
     pred[s] = s;
-    content[0].content[0].push_back(s);
-    content[0].empty = false;
-    long i = 0;
+    content[0].content = std::list<int>();
+    content[0].content.push_front(s);
+    d[s].second = content[0].content.begin();
+    content[0].elements = 1;
     while(visited < n) {
-        while (content[i].empty && i < nofBuckets) {
+        long i = 0;
+        while (content[i].elements < 1 && i < nofBuckets) {
             i++;
         }
         if (i >= nofBuckets) {
@@ -138,145 +325,66 @@ std::vector<long> GraphAlgorithms::radix(Graph *g, int s, int C) {
         }
         long minLabel = INF;
         long u;
-        for (long j = content[i].minLabel; j <= content[i].maxLabel; j++) {
-            if (!content[i].content[j].empty()) {
-                minLabel = j;
-                u = content[i].content[j].front();
-                content[i].content[j].pop_front();
-                visited++;
-                break;
+        for (auto& c: content[i].content) {
+            if (d[c].first < minLabel) {
+                minLabel = d[c].first;
+                u = c;
             }
         }
+        if (u == goal) {
+            break;
+        }
+        content[i].content.remove(u);
+        content[i].elements--;
+        visited++;
+        minLabel = d[u].first - content[0].minLabel;
         for (auto& b: content) {
             b.minLabel += minLabel;
             b.maxLabel += minLabel;
         }
         for (int j = 1; j < nofBuckets; j++) {
-            for (int k = 0; k < content[j].maxLabel - content[j].minLabel + 1; k++) {
-                int l = j;
-                auto& list = content[i].content[j];
-                std::remove(content[i].content.begin(), content[i].content.end(), list);
-                while (content[l].minLabel > d[list.front()].first) {
-                    l--;
+            if (content[j].elements > 0) {
+                int e = content[j].elements;
+                for (int k = 0; k < e; k++) {
+                    int node = content[j].content.front();
+                    content[j].content.pop_front();
+                    content[j].elements--;
+                    int l = j;
+                    while (content[l].minLabel > d[node].first) {
+                        l--;
+                    }
+                    content[l].content.push_back(node);
+                    d[node].second = content[l].content.end();
+                    content[l].elements += 1;
                 }
-                content[l].content[d[list.front()].first - minLabel] = list;
             }
         }
-
         auto edges = g->getEdges(u);
 
-        /*for (auto& e : edges) {
+        for (auto& e : edges) {
             if (d[e.dest].first > d[u].first + e.w) {
                 if (d[e.dest].first != INF) {
-                    content[d[e.dest].first % nC].remove(e.dest);
+                    int j = 0;
+                    while (content[j].maxLabel < d[e.dest].first) {
+                        j++;
+                    }
+                    content[j].content.remove(e.dest);
+                    content[j].elements--;
                 }
 
                 d[e.dest].first = d[u].first + e.w;
                 pred[e.dest] = u;
+                int j = 0;
+                while (content[j].maxLabel < d[e.dest].first) {
+                    j++;
+                }
+                content[j].content.push_front(e.dest);
+                content[j].elements++;
 
-                content[d[e.dest].first % nC].push_front(e.dest);
+                d[e.dest].second = content[j].content.begin();
             }
-        }*/
+        }
     }
-
-    std::vector<long> distance(n);
-    for (size_t i = 1; i < n + 1; i++) {
-        distance[i - 1] = d[i].first;
-    }
-    return distance;
+    return d[goal].first;
 }
-/*
-std::vector<int> GraphAlgorithms::dial(Graph *g, int s, int C) {
-    size_t n = g->getNumberOfVertices();
-    size_t nC = n * C + 1;
-    std::vector<int> d(n + 1);
-    std::vector<int> pred(n + 1);
-    std::vector<std::list<int>> content(nC);
-    for (size_t i = 1; i < n + 1; i++) {
-        d[i] = INF;
-    }
-    d[s] = 0;
-    pred[s] = s;
-    content[0].push_back(s);
-    int i = 0;
-    while(true) {
-        while (content[i].empty()) {
-            i++;
-        }
-        if (i == nC) {
-            break;
-        }
-        int u = content[i].front();
-        content[i].pop_front();
 
-        auto edges = g->getEdges(u);
-        for (auto& e : edges) {
-            if (d[e.dest] > d[u] + e.w) {
-                if (d[e.dest] != INF) {
-                    content[d[e.dest]].remove(e.dest);
-                }
-                d[e.dest] = d[u] + e.w;
-                pred[e.dest] = u;
-
-                content[d[e.dest]].push_front(e.dest);
-            }
-        }
-    }
-    return d;
-}*/
-/*
-void Graph::djikstra(int s) {
-    Timer t;
-    std::unordered_map<int, double> dist;
-    std::unordered_map<int, int> prev;
-
-    for (auto& kv : nodeMap) {
-        dist[kv.first] = INT32_MAX;
-        prev[kv.first] = -1;
-    }
-    dist[s] = 0;
-
-    PriorityQueue q;
-
-    for (auto& kv : nodeMap) {
-        q.insert(kv.first, dist[kv.first] * 100);
-    }
-
-    while(!q.empty()) {
-        int u = q.pop();
-        for (auto& n : nodeMap[u]) {
-            if (dist[n.dest] > dist[u] + n.w) {
-                dist[n.dest] = dist[u] + n.w;
-                prev[n.dest] = u;
-                q.priority(n.dest, dist[n.dest] * 100);
-            }
-        }
-    }
-    long time = t.getTimeInMicroseconds().count();
-    for (int i = 0; i < dist.size(); i++) {
-        std::cout << i << ' ' << dist[i] << '\n';
-    }
-    for (int i = 0; i < dist.size(); i++) {
-        std::cerr << "Path to: "<< i << " is: ";
-        int j = i;
-        std::vector<double> path{};
-        while (j != s) {
-            auto vec = nodeMap[prev[j]];
-            for (auto& n : vec) {
-                if (n.dest == j) {
-                    path.push_back(n.w);
-                    break;
-                }
-            }
-            path.push_back(prev[j]);
-
-            j = prev[j];
-        }
-        std::reverse(path.begin(), path.end());
-        for (auto& n : path) {
-            std::cerr << n << ' ';
-        }
-        std::cerr << '\n';
-    }
-    std::cerr << "time: " << time << "us";
-}*/

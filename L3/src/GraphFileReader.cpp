@@ -3,7 +3,7 @@
 //
 
 #include <fstream>
-#include "GraphFileReader.h"
+#include "../include/GraphFileReader.h"
 
 Graph *GraphFileReader::loadGraph(const std::string &path) {
     std::ifstream f(path, std::ios::in);

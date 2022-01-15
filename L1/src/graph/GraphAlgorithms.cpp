@@ -7,6 +7,8 @@
 #include <iostream>
 #include <algorithm>
 #include <set>
+#include <GraphAlgorithms.h>
+
 
 #include "../../include/graph/GraphAlgorithms.h"
 

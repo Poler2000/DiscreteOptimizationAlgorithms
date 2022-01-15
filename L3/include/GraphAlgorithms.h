@@ -11,11 +11,11 @@
 class GraphAlgorithms {
 public:
     static std::vector<long> dijkstra(Graph* g, int s);
-    static std::vector<long> dijkstra(Graph* g, int s, int d);
+    static long dijkstra(Graph* g, int s, int d);
     static std::vector<long> dial(Graph* g, int s, int C);
-    static std::vector<long> dial(Graph* g, int s, int d, int C);
+    static long dial(Graph* g, int s, int d, int C);
     static std::vector<long> radix(Graph* g, int s, int C);
-    static std::vector<long> radix(Graph* g, int s, int d, int C);
+    static long radix(Graph* g, int s, int d, int C);
 
 private:
     static constexpr long INF = INT64_MAX;

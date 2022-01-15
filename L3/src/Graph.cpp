@@ -7,12 +7,12 @@
 #include <iostream>
 
 Graph::Graph(bool directed, int n)
-        : _isDirected(directed), _n(n) {
+        : _isDirected(directed), _n(n), _m(0) {
     _adjacencyList.resize(n + 1);
 }
 
 Graph::Graph(bool directed, int n, int m)
-        : _isDirected(directed), _n(n) {
+        : _isDirected(directed), _n(n), _m(0) {
     _adjacencyList.resize(n + 1);
 }
 
@@ -20,6 +20,7 @@ void Graph::addEdge(int u, int v, int w) {
     if (!edgeExist(u, v)) {
         _adjacencyList[u].emplace_back(v);
         _nodeMap[u].emplace_back(Edge{u, v, w});
+        _m++;
     }
     if (!_isDirected) {
         if (!edgeExist(v, u)) {
@@ -49,7 +50,7 @@ std::vector<int> Graph::getNeighbours(int n) const {
 }
 
 bool Graph::edgeExist(int u, int v) const {
-    for (auto n : _adjacencyList[u]) {
+    for (auto& n : _nodeMap[u]) {
         if (n == v) {
             return true;
         }
@@ -67,4 +68,8 @@ bool Graph::isDirected() const {
 
 std::vector<Edge> Graph::getEdges(int s) {
     return _nodeMap[s];
+}
+
+int Graph::getNumberOfEdges() const {
+    return _m;
 }

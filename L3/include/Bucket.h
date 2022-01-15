@@ -9,7 +9,15 @@ struct Bucket {
     long minLabel;
     long maxLabel;
     std::vector<std::list<int>> content;
-    bool empty = true;
+    size_t elements = 0;
 };
+
+struct Bucket2 {
+    long minLabel;
+    long maxLabel;
+    std::list<int> content;
+    size_t elements = 0;
+};
+
 
 #endif //L3_BUCKET_H
