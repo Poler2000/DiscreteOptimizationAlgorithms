@@ -50,7 +50,7 @@ std::vector<int> Graph::getNeighbours(int n) const {
 }
 
 bool Graph::edgeExist(int u, int v) const {
-    for (auto& n : _nodeMap[u]) {
+    for (auto n : _adjacencyList[u]) {
         if (n == v) {
             return true;
         }

@@ -2,3 +2,4 @@
 cmake-build-debug
 *_output
 .idea
+/L3/data/

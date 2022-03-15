@@ -6,11 +6,10 @@
 
 int main() {
 
-    //Graph* g = GraphFileReader::loadGraph("../data/Long-n/Long-n.15.0.gr");
-    for (int j = 0; j < 16; j++) {
+    for (int j = 10; j < 22; j++) {
         std::string num = std::to_string(j);
-        Graph* g = GraphFileReader::loadGraph("../data/Long-C/Long-C." + num + ".0.gr");
-        auto sources = GraphFileReader::loadSources("../data/Long-C/Long-C." + num + ".0.ss");
+        Graph* g = GraphFileReader::loadGraph("../data/Long-n/Long-n." + num + ".0.gr");
+        auto sources = GraphFileReader::loadSources("../data/Long-n/Long-n." + num + ".0.ss");
         for (int i = 0; i < 1; i++) {
             std::cout << j << ';';
             Timer t1;

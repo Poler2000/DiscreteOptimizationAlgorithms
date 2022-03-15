@@ -40,6 +40,6 @@ void JuMPGenerator::generateModelFile(Graph &g, const std::string &filename) {
          "\n"
          "println(objective_value(max_flow))\n"
          "\n"
-         "println(value.(f))";
+         "display(value.(f))";
     f.close();
 }

@@ -57,12 +57,19 @@ void Graph::removeEdge(int u, int v) {
     }
 }
 
-void Graph::print() const {
-    int i = 0;
+void Graph::print() {
+    /*int i = 0;
     for (auto& v : _adjacencyList) {
         std::cout << i++ << ' ';
         for (auto n : v) {
             std::cout << n << ' ';
+        }
+        std::cout << '\n';
+    }*/
+    for (int i = 0; i < _n; i++) {
+        std::cout << i << ' ' << std::flush;
+        for (auto n : _nodeMap[i]) {
+            std::cout << "d: " << n->dest << " u: " << n->u << ' ';
         }
         std::cout << '\n';
     }

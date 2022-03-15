@@ -12,19 +12,23 @@
 
 class GraphAlgorithms {
 public:
+    struct Result {
+        long long time;
+        long long paths;
+        long flow;
+    };
+
     static std::pair<std::vector<long>, std::vector<std::shared_ptr<Edge>>> dijkstra(Graph* g, int s, int d);
 
-    template<int N>
-    static Graph* generateHypercube() {
-        auto upper = pow(2, N);
-        std::cout << static_cast<int>(upper) << '\n';
+    static Graph* generateHypercube(int n) {
+        auto upper = pow(2, n);
         auto* g = new Graph(true, static_cast<int>(upper));
         for (int i = 0; i < upper; i++) {
-            std::bitset<N> bits(i);
+            std::bitset<32> bits(i);
 
             int h = bits.count();
-            int z = N - h;
-            for (int j = 0; j < N; j++) {
+            int z = n - h;
+            for (int j = 0; j < n; j++) {
                 int src = static_cast<int>(bits.to_ulong());
 
                 bits[j] = bits[j] == 0 ? 1 : 0;
@@ -41,8 +45,8 @@ public:
         return g;
     }
 
-    static void edmondsKarp(Graph& g, int s, int t);
-    static void shortestAugmentingPath(Graph& g, int s, int t);
+    static Result edmondsKarp(Graph& g, int s, int t, bool printFlow);
+    static Result shortestAugmentingPath(Graph& g, int s, int t, bool printFlow);
     static int rndCap(int l);
 
 private:

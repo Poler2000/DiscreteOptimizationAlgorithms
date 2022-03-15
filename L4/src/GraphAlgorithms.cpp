@@ -5,8 +5,6 @@
 #include "GraphAlgorithms.h"
 #include "Timer.h"
 
-#include <bitset>
-#include <queue>
 #include <algorithm>
 #include <random>
 #include "PriorityQueue.h"
@@ -59,18 +57,17 @@ void dfs(Graph& g, int v, int s, int t, std::vector<bool>& visited, std::vector<
     }
 }
 
-void GraphAlgorithms::edmondsKarp(Graph& g, int s, int t) {
+GraphAlgorithms::Result GraphAlgorithms::edmondsKarp(Graph& g, int s, int t, bool printFlow) {
     long long flow = 0;
     const int n = g.getNumberOfVertices();
     auto pair = dijkstra(&g, s, t);
     auto& d = pair.first;
     auto& pred = pair.second;
+    long long paths = 0;
     Timer t1;
     int it = 0;
     do {
         it++;
-        // bfs
-        Timer t2;
         for (int i = 0; i < n; i++) {
             pred[i] = nullptr;
         }
@@ -78,6 +75,7 @@ void GraphAlgorithms::edmondsKarp(Graph& g, int s, int t) {
         std::vector<bool> visited(n);
         dfs(g, s, s, t, visited, pred);
 
+        // bfs version - not effective
         /*std::queue<int> q;
         q.push(s);
 
@@ -93,9 +91,8 @@ void GraphAlgorithms::edmondsKarp(Graph& g, int s, int t) {
             }
         }*/
 
-        Timer t4;
-
         if (pred[t] != nullptr) {
+            paths++;
             int df = INT32_MAX;
             for (auto e = pred[t]; e != nullptr; e = pred[e->source]) {
                 df = std::min(df, e->u - e->f);
@@ -103,24 +100,28 @@ void GraphAlgorithms::edmondsKarp(Graph& g, int s, int t) {
 
             for (auto e = pred[t]; e != nullptr; e = pred[e->source]) {
                 e->f += df;
-                if (g.edgeExist(e->dest, e->source)) {
-                    auto r = g.getEdge(e->dest, e->source);
-                    r->f -= df;
-                } /*else {
-                    g.addEdge(e->dest, e->source, -df, 0);
-                }*/
                 if (e->u == e->f) {
+                    if (printFlow) {
+                        std::cout << e->source << " -> " << e->dest << ' ' << e->f << '/' << e->u << '\n';
+                    }
                     g.removeEdge(e->source, e->dest);
                 }
             }
             flow += df;
-
         }
-        //std::cout << pred[t]->source << '\n';
-
     } while (pred[t] != nullptr);
+
+    if (printFlow) {
+        for (int i = 0; i < n; i++) {
+            for (auto n : g.getEdges(i)) {
+                std::cout << n->source << " -> " << n->dest << ' ' << n->f << '/' << n->u << '\n';
+            }
+        }
+    }
+
     std::cout << "Flow is: " << flow << '\n';
     std::cout << "time is: " << t1.getTimeInMicroseconds().count() << '\n';
+    return {t1.getTimeInMicroseconds().count(), paths, flow};
 }
 
 int GraphAlgorithms::rndCap(int l) {
@@ -131,22 +132,16 @@ int GraphAlgorithms::rndCap(int l) {
     return dis(gen);
 }
 
-void GraphAlgorithms::shortestAugmentingPath(Graph &g, int s, int t) {
+GraphAlgorithms::Result GraphAlgorithms::shortestAugmentingPath(Graph &g, int s, int t, bool printFlow) {
     long long flow = 0;
-    int x = 0;
     Timer t1;
     const int n = g.getNumberOfVertices();
     auto pair = dijkstra(&g, s, t);
     auto& d = pair.first;
     auto& pred = pair.second;
     int curr = s;
-    std::cout << "let's begin\n";
-    std::cout << 0 << ' ' << d[0] << '\n';
-    for (int i = 1; i < n; i++) {
-        std::cout << i << ' ' << d[i] << ' ' << pred[i]->source << '\n';
-    }
+    long long paths = 0;
     while (d[s] < n) {
-        //std::cout << curr << '\n';
         auto edges = g.getEdges(curr);
         bool isAdmissibleArc = false;
         for (auto& e : edges) {
@@ -170,9 +165,16 @@ void GraphAlgorithms::shortestAugmentingPath(Graph &g, int s, int t) {
             if (curr != s) {
                 curr = pred[curr]->source;
             }
+            if (printFlow) {
+                auto e = g.getEdge(curr, prev);
+                if (e != nullptr) {
+                    std::cout << e->source << " -> " << e->dest << ' ' << e->f << '/' << e->u << '\n';
+                }
+            }
             g.removeEdge(curr, prev);
         } else {
             if (curr == t) {
+                paths++;
                 if (pred[t] != nullptr) {
                     int df = INT32_MAX;
                     for (auto e = pred[t]; e != nullptr; e = pred[e->source]) {
@@ -183,10 +185,11 @@ void GraphAlgorithms::shortestAugmentingPath(Graph &g, int s, int t) {
                         if (g.edgeExist(e->dest, e->source)) {
                             auto r = g.getEdge(e->dest, e->source);
                             r->f -= df;
-                        } /*else {
-                    g.addEdge(e->dest, e->source, -df, 0);
-                }*/
+                        }
                         if (e->u == e->f) {
+                            if (printFlow) {
+                                std::cout << e->source << " -> " << e->dest << ' ' << e->f << '/' << e->u << '\n';
+                            }
                             g.removeEdge(e->source, e->dest);
                         }
                     }
@@ -197,6 +200,15 @@ void GraphAlgorithms::shortestAugmentingPath(Graph &g, int s, int t) {
         }
     }
 
+    if (printFlow) {
+        for (int i = 0; i < n; i++) {
+            for (auto n : g.getEdges(i)) {
+                std::cout << n->source << " -> " << n->dest << ' ' << n->f << '/' << n->u << '\n';
+            }
+        }
+    }
+
     std::cout << "Flow is: " << flow << '\n';
     std::cout << "time is: " << t1.getTimeInMicroseconds().count() << '\n';
+    return {t1.getTimeInMicroseconds().count(), paths, flow};
 }

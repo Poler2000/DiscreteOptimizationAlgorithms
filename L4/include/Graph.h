@@ -29,6 +29,8 @@ public:
     //void removeEdge(int u, int v);
 
     void print() const;
+    void print();
+
     [[nodiscard]] std::vector<std::vector<int>> getAdjacencyList() const;
     [[nodiscard]] std::vector<int> getNeighbours(int n) const;
     [[nodiscard]] bool edgeExist(int u, int v);
@@ -43,6 +45,7 @@ private:
     int _m;
     std::unordered_map<int, std::vector<std::shared_ptr<Edge>>> _nodeMap;
     std::vector<std::vector<int>> _adjacencyList;
+
 };
 
 
